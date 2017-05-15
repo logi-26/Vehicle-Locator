@@ -1,4 +1,4 @@
-private ["_characterID","_found","_i","_keyID","_keyIDS","_keyList","_keyName","_keyNames","_marker","_vehicleName","_targetPosition","_vehicle_type","_showMapMarker","_markerColour"];
+private ["_characterID","_found","_i","_keyID","_keyIDS","_keyList","_keyName","_keyNames","_vehicleMarker","_vehicleName","_targetPosition","_vehicle_type","_showMapMarker","_markerColour"];
 
 //**************************************************************************************************************************************
 // CONFIG
@@ -33,12 +33,12 @@ _i = 0;
 			
 			if (_showMapMarker){
 				_targetPosition = getPos _x;
-				_marker = createMarkerLocal ["vehicleMarker" + (str _i),[_targetPosition select 0,_targetPosition select 1]];
-				_marker setMarkerShapeLocal "ICON";
-				_marker setMarkerTypeLocal "DOT";
-				_marker setMarkerColorLocal _markerColour;
-				_marker setMarkerSizeLocal [1.0, 1.0];
-				_marker setMarkerTextLocal format ["Here is your: %1",_vehicleName];
+				_vehicleMarker = createMarkerLocal ["vehicleMarker" + (str _i),[_targetPosition select 0,_targetPosition select 1]];
+				_vehicleMarker setMarkerShapeLocal "ICON";
+				_vehicleMarker setMarkerTypeLocal "DOT";
+				_vehicleMarker setMarkerColorLocal _markerColour;
+				_vehicleMarker setMarkerSizeLocal [1.0, 1.0];
+				_vehicleMarker setMarkerTextLocal format ["Here is your: %1",_vehicleName];
 			};
 			
 			systemChat format ["%1 belongs to %2%3.",_keyName,_vehicleName,if (!alive _x) then {" (destroyed)"} else {""}];
