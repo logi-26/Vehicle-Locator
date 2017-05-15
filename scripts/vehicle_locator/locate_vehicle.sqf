@@ -1,4 +1,4 @@
-private ["_inv","_searchString","_ID","_found","_targetColor","_finalID","_targetPosition","_targetVehicle","_count","_key","_keyName","_showMapMarker","_markerColour"];
+private ["_characterID","_found","_i","_keyID","_keyIDS","_keyList","_keyName","_keyNames","_marker","_vehicleName","_targetPosition","_vehicle_type","_showMapMarker","_markerColour"];
 
 //**************************************************************************************************************************************
 // CONFIG
@@ -8,79 +8,43 @@ _markerColour = "ColorOrange";    // Alternatives = "ColorBlack", "ColorRed", "C
 
 //**************************************************************************************************************************************
 
-_inv = [player] call BIS_fnc_invString;
-if (_showMapMarker && !("ItemGPS" in _inv)) exitWith { systemChat "You need a GPS to locate your vehicles!";};
-_keyColor = [];
-_keyID = [];
-_removedID = [];
-_count = 0;
+_keyList = call epoch_tempKeys;
+_keyIDS = _keyList select 0;
+_keyNames = _keyList select 1;
 
-closedialog 0;
+_i = 0;
+for "_i" from 0 to 60 do {deleteMarkerLocal ("vehicleMarker"+ (str _i));};
+
+if (count _keyIDS == 0) exitWith {systemchat "No key found!"};
+
+_i = 0;
 {
-    for "_i" from 1 to 2500 do {
-        _searchString = format ["ItemKey%1%2",_x,str(_i)];
-        if ((_searchString in _inv)) then {
-			_count = _count + 1;
-            _targetColor = _x;
-			_keyColor = _keyColor + [_targetColor];
-            _ID = str(_i);
-			_ID = parseNumber _ID;
-			if (_targetColor == "Green") then { _finalID = _ID; };
-			if (_targetColor == "Red") then { _finalID = _ID + 2500; };
-			if (_targetColor == "Blue") then { _finalID = _ID + 5000; };
-			if (_targetColor == "Yellow") then { _finalID = _ID + 7500; };
-			if (_targetColor == "Black") then { _finalID = _ID + 10000; };
-			_keyID = _keyID + [_finalID];
-			_removedID = _removedID + [_ID];
-        };
-    };
-} forEach ["Black","Yellow","Blue","Green","Red"];
-
-_i = 0;
-for "_i" from 0 to 10 do {deleteMarkerLocal ("vehicleMarker"+ (str _i));};
-
-if (_count == 0) exitWith { systemChat "No key found!";};
-
-if (_count == 1) then { systemChat format ["Found: %1 vehicle key",_count];}
-else {systemChat format ["Found: %1 vehicle keys",_count];};
-
-_count = _count - 1;
-_i = 0;
-for "_i" from 0 to _count do {
-	_finalID = _keyID select _i;
-	_ID = _removedID select _i;
-	_targetColor = _keyColor select _i;
-	_key = format["ItemKey%1%2",_targetColor,_ID];
-	_keyName = getText (configFile >> "CfgWeapons" >> _key >> "displayName");
+	_keyID = parseNumber (_keyIDS select _forEachIndex);
+	_keyName = _keyNames select _forEachIndex;
 	_found = 0;
-	
 	{
-		private ["_tID","_vehicle_type"];
 		_vehicle_type = typeOf _x;
-		_tID = parseNumber (_x getVariable ["CharacterID","0"]);
-		if ((_tID == _finalID) && ((_vehicle_type isKindOf "Air") || (_vehicle_type isKindOf "LandVehicle") || (_vehicle_type isKindOf "Ship"))) then {
-			_targetPosition = getPosATL _x;
-			_targetVehicle = _x;
-			_found = 1;
+		_characterID = parseNumber (_x getVariable ["CharacterID","0"]);
+		if ((_characterID == _keyID) && {_vehicle_type isKindOf "Air" || _vehicle_type isKindOf "LandVehicle" || _vehicle_type isKindOf "Ship"}) then {
+			_found = _found +1;
+			_i = _i +1;
+			
+			_vehicleName = getText (configFile >> "CfgVehicles" >> _vehicle_type >> "displayName");
+			
+			if (_showMapMarker){
+				_targetPosition = getPos _x;
+				_marker = createMarkerLocal ["vehicleMarker" + (str _i),[_targetPosition select 0,_targetPosition select 1]];
+				_marker setMarkerShapeLocal "ICON";
+				_marker setMarkerTypeLocal "DOT";
+				_marker setMarkerColorLocal _markerColour;
+				_marker setMarkerSizeLocal [1.0, 1.0];
+				_marker setMarkerTextLocal format ["Here is your: %1",_vehicleName];
+			};
+			
+			systemChat format ["%1 belongs to %2%3.",_keyName,_vehicleName,if (!alive _x) then {" (destroyed)"} else {""}];
 		};
 	} forEach vehicles;
+	if (_found == 0) then {systemChat format ["No vehicles found for %1.",_keyName]};
+} forEach _keyIDS;
 
-	if (_found != 0) then {
-		_vehicleName = gettext (configFile >> "CfgVehicles" >> (typeof _targetVehicle) >> "displayName");
-		if (_showMapMarker) then {
-			_Marker = "vehicleMarker" + (str _i);
-			_vehicleMarker = createMarkerLocal [_Marker,[(_targetPosition select 0),(_targetPosition select 1)]];
-			_vehicleMarker setMarkerShapeLocal "ICON";
-			_vehicleMarker setMarkerTypeLocal "DOT";
-			_vehicleMarker setMarkerColorLocal _markerColour;
-			_vehicleMarker setMarkerSizeLocal [1.0, 1.0];
-			_vehicleMarker setMarkerTextLocal format ["Here is your: %1",_vehicleName];
-			systemChat format ["%1 belongs to %2 - %3",_keyName,_vehicleName,_finalID];
-		} else { systemChat format ["%1 belongs to %2 - %3",_keyName,_vehicleName,_finalID];};
-	} else { systemChat format ["%1 - Vehicle ID: %2 - (This vehicle no longer exists in the database)",_keyName,_finalID];};	
-};
-
-if (_showMapMarker) then {
-	if (_count == 0) then { systemChat "Check the map to locate your vehicle!";}
-	else {systemChat "Check the map to locate your vehicles!";};
-};
+if (_i > 0 && _showMapMarker) then {systemChat format ["Found %1 matching vehicles, check your map for marked locations.",_i];};
