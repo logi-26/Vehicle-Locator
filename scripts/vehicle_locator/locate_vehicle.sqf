@@ -32,7 +32,7 @@ _i = 0;
 			_vehicleName = getText (configFile >> "CfgVehicles" >> _vehicle_type >> "displayName");
 			
 			if (_showMapMarker){
-				_targetPosition = getPos _x;
+				_targetPosition = getPosATL _x;
 				_vehicleMarker = createMarkerLocal ["vehicleMarker" + (str _i),[_targetPosition select 0,_targetPosition select 1]];
 				_vehicleMarker setMarkerShapeLocal "ICON";
 				_vehicleMarker setMarkerTypeLocal "DOT";
